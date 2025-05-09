@@ -1,7 +1,4 @@
--- StudySync Physical Data Model
--- SQL DDL for Supabase (PostgreSQL)
-
--- 1. Task status enum
+-- 1. Task status
 DROP TYPE IF EXISTS task_status;
 CREATE TYPE task_status AS ENUM ('to-do', 'doing', 'done');
 
@@ -25,7 +22,7 @@ CREATE TABLE study_groups (
   created_at  TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- 4. Group members (N:N relationship)
+-- 4. Group members
 DROP TABLE IF EXISTS group_members;
 CREATE TABLE group_members (
   group_id INTEGER NOT NULL REFERENCES study_groups(id) ON DELETE CASCADE,
@@ -50,7 +47,7 @@ CREATE TABLE tasks (
 );
 
 
--- Trigger to auto-update updated_at
+-- Trigger to auto-update
 CREATE OR REPLACE FUNCTION fn_update_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
