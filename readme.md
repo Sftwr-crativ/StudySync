@@ -1,83 +1,68 @@
-# Boilerplate MVC em Node.js com PostgreSQL
+# StudySync - Projeto Individual
 
-Este projeto é um boilerplate básico para uma aplicação Node.js seguindo o padrão MVC (Model-View-Controller), utilizando PostgreSQL como banco de dados.
+## Descrição do Sistema Escolhido
 
-## Requisitos
+O **StudySync** é um sistema web colaborativo voltado para grupos de estudo. Ele permite que usuários criem grupos, atribuam tarefas com prazos e status (Kanban: `to-do`, `doing`, `done`) e acompanhem a sincronização do progresso coletivo. O sistema facilita o acompanhamento de tarefas e promove o senso de responsabilidade entre os membros.
 
-- Node.js (versão X.X.X)
-- PostgreSQL (versão X.X.X)
+Este projeto, na sua primeira etapa, foca na estruturação da base do sistema utilizando Node.js com Express e organização do código no padrão **MVC** (Model-View-Controller). Também inclui a modelagem do banco de dados que será utilizado nas próximas fases.
 
-## Instalação
+---
 
-1. **Clonar o repositório:**
+## Estrutura de Pastas e Arquivos
 
-```bash
-   git clone https://github.com/seu-usuario/seu-projeto.git
-   cd seu-projeto
+```
+study-sync/
+│
+├── config/                # Configurações (ex: database.js)
+├── controllers/           # Controladores da aplicação
+├── models/                # Modelos de dados
+├── routes/                # Definição das rotas
+├── services/              # Serviços auxiliares (lógica de apoio)
+├── assets/                # Arquivos públicos como imagens
+├── scripts/               # Scripts SQL e utilitários
+├── styles/                # Arquivos CSS
+├── tests/                 # Testes automatizados (ex: example.test.js)
+├── views/                 # Páginas EJS (se aplicável futuramente)
+├── .env.example           # Exemplo de variáveis de ambiente
+├── .gitignore             # Arquivos a serem ignorados no Git
+├── jest.config.js         # Configuração do Jest (testes)
+├── package.json           # Dependências do projeto
+├── package-lock.json      # Lock das dependências
+├── rest.http              # Arquivo para testar endpoints HTTP (opcional)
+├── server.js              # Arquivo principal que inicia o servidor
+├── readme.md              # Documentação do projeto
+└── modelo-banco.png/pdf   # Diagrama do banco de dados
 ```
 
-2. **Instalar as dependências:**
-    
+---
+
+## Como Executar o Projeto Localmente
+
+### 1. Instalar dependências
+
 ```bash
 npm install
 ```
-    
-3. **Configurar o arquivo `.env`:**
-    
-Renomeie o arquivo `.env.example` para `.env` e configure as variáveis de ambiente necessárias, como as configurações do banco de dados PostgreSQL.
-    
 
-Configuração do Banco de Dados
-------------------------------
+### 2. Rodar o servidor
 
-1. **Criar banco de dados:**
-    
-    Crie um banco de dados PostgreSQL com o nome especificado no seu arquivo `.env`.
-    
-2. **Executar o script SQL de inicialização:**
-    
 ```bash
-npm run init-db
+node server.js
 ```
-    
-Isso criará a tabela `users` no seu banco de dados PostgreSQL com UUID como chave primária e inserirá alguns registros de exemplo.
-    
 
-Funcionalidades
----------------
+Ou, se tiver configurado:
 
-* **Padrão MVC:** Estrutura organizada em Model, View e Controller.
-* **PostgreSQL:** Banco de dados relacional utilizado para persistência dos dados.
-* **UUID:** Utilização de UUID como chave primária na tabela `users`.
-* **Scripts com `nodemon`:** Utilização do `nodemon` para reiniciar automaticamente o servidor após alterações no código.
-* **Testes:** Inclui estrutura básica para testes automatizados.
+```bash
+npm start
+```
 
-Scripts Disponíveis
--------------------
+A aplicação será iniciada em: `http://localhost:3000`
 
-* `npm start`: Inicia o servidor Node.js.
-* `npm run dev`: Inicia o servidor com `nodemon`, reiniciando automaticamente após alterações no código.
-* `npm run test`: Executa os testes automatizados.
-* `npm run test:coverage`: Executa os testes e gera um relatório de cobertura de código.
+---
 
-Estrutura de Diretórios
------------------------
+## Banco de Dados
 
-* **`config/`**: Configurações do banco de dados e outras configurações do projeto.
-* **`controllers/`**: Controladores da aplicação (lógica de negócio).
-* **`models/`**: Modelos da aplicação (definições de dados e interações com o banco de dados).
-* **`routes/`**: Rotas da aplicação.
-* **`tests/`**: Testes automatizados.
-* **`views/`**: Views da aplicação (se aplicável).
-
-Contribuição
-------------
-
-Contribuições são bem-vindas! Sinta-se à vontade para abrir um issue ou enviar um pull request.
-
-Licença
--------
-
-Este projeto está licenciado sob a Licença MIT.
-
-Este README.md fornece uma visão geral clara do boilerplate, incluindo instruções de instalação, configuração do banco de dados, funcionalidades principais, scripts disponíveis, estrutura de diretórios, como contribuir e informações de licença. Certifique-se de personalizar as seções com detalhes específicos do seu projeto conforme necessário.
+* O banco de dados foi modelado em PostgreSQL.
+* O modelo físico (SQL) está no arquivo: `scripts/init.sql`
+* O diagrama do banco (modelo lógico/relacional) está salvo como `diagrama.png`
+* O banco será futuramente implementado usando o Supabase.
