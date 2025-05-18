@@ -19,15 +19,15 @@ O banco de dados foi modelado utilizando PostgreSQL e projetado para refletir a 
 * **CalendarEvents**: eventos agendados nos grupos.
 * **GroupSyncStatus**: view que mostra o nível de sincronização do grupo com base na conclusão das tarefas.
 
-### Diagrama Relacional
+## Diagrama Relacional
 
-<img src="C:\Users\eduar\OneDrive\Documentos\GitHub\StudySync\assets\diagrama.png"></img>
+<img src="https://github.com/Sftwr-crativ/StudySync/blob/8250c601f2d004173ff306d369c2d330bcf35d15/diagrama.png"></img>
 
 ---
 
 ## Modelo Físico
 
-O modelo físico foi implementado em SQL puro e está disponível no arquivo:
+O modelo físico foi implementado em SQL e está disponível no arquivo:
 
 ```
 scripts/init.sql

@@ -1,6 +1,10 @@
 -- StudySync Physical Data Model
 -- SQL DDL for Supabase (PostgreSQL)
 
+-- 1. Task status enum
+DROP TYPE IF EXISTS task_status;
+CREATE TYPE task_status AS ENUM ('to-do', 'doing', 'done');
+
 -- 2. Users table
 DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE users (
@@ -21,7 +25,7 @@ CREATE TABLE study_groups (
   created_at  TIMESTAMP NOT NULL DEFAULT now()
 );
 
--- 4. Group members (N:N relationship)
+-- 4. Group members
 DROP TABLE IF EXISTS group_members;
 CREATE TABLE group_members (
   group_id INTEGER NOT NULL REFERENCES study_groups(id) ON DELETE CASCADE,
@@ -63,7 +67,7 @@ CREATE TABLE tasks (
   updated_at  TIMESTAMP    NOT NULL DEFAULT now()
 );
 
--- Trigger to auto-update updated_at
+-- Trigger to auto-update
 CREATE OR REPLACE FUNCTION fn_update_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -98,3 +102,22 @@ CREATE TABLE calendar_events (
   start_time  TIMESTAMP NOT NULL,
   end_time    TIMESTAMP NOT NULL
 );
+
+-- 8. View: Group synchronization status
+DROP VIEW IF EXISTS group_sync_status;
+CREATE VIEW group_sync_status AS
+SELECT
+  g.id                 AS group_id,
+  g.name               AS group_name,
+  t.due_date,
+  COUNT(t.id)          AS total_tasks,
+  SUM((t.status = 'done')::int) AS done_tasks,
+  CASE
+    WHEN COUNT(t.id) = 0 THEN NULL
+    WHEN COUNT(t.id) = SUM((t.status = 'done')::int) THEN true
+    ELSE false
+  END AS all_synced
+FROM study_groups g
+LEFT JOIN tasks t ON t.group_id = g.id
+GROUP BY g.id, g.name, t.due_date
+ORDER BY g.id, t.due_date;
