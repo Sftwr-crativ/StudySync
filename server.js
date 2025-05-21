@@ -1,19 +1,17 @@
-// server.js
 const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const routes = require('./routes');
+const path = require('path');
+const dotenv = require('dotenv');
+const router = require('./routes/index');
 
+dotenv.config();
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-// Middlewares
-app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/view', express.static(path.join(__dirname, 'view')));
+app.use(router);
 
-// Usando as rotas definidas
-app.use('/api', routes);
-
-app.listen(port, () => {
-  console.log(`Servidor rodando na porta ${port}`);
-});
+app.listen(PORT, () =>
+  console.log(`Servidor rodando em http://localhost:${PORT}`)
+);

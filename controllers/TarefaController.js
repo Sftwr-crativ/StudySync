@@ -1,69 +1,71 @@
-// controllers/TarefaController.js
-const pool = require('../config/db');
+const TaskModel = require('../models/task');
 
-// Criar uma nova tarefa
-exports.criarTarefa = async (req, res) => {
-  const { nome, descricao } = req.body;
-
-  const query = 'INSERT INTO tarefas (nome, descricao) VALUES ($1, $2) RETURNING *';
-  const values = [nome, descricao];
-
-  try {
-    const result = await pool.query(query, values);
-    const tarefa = result.rows[0];
-    res.status(201).json(tarefa);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Listar todas as tarefas
-exports.listarTarefas = async (req, res) => {
-  const query = 'SELECT * FROM tarefas';
-
-  try {
-    const result = await pool.query(query);
-    res.status(200).json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// Editar uma tarefa
-exports.editarTarefa = async (req, res) => {
-  const { id } = req.params;
-  const { nome, descricao, status } = req.body;
-
-  const query = `
-    UPDATE tarefas SET nome = $1, descricao = $2, status = $3, updated_at = CURRENT_TIMESTAMP
-    WHERE id = $4 RETURNING *`;
-  const values = [nome, descricao, status, id];
-
-  try {
-    const result = await pool.query(query, values);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Tarefa não encontrada' });
+module.exports = {
+  // Renderiza via form POST
+  async criarTarefa(req, res) {
+    const { title, due_date } = req.body;
+    try {
+      await TaskModel.create({ group_id: 1, user_id: 1, title, due_date });
+      res.redirect('/');
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Erro ao criar tarefa');
     }
-    res.status(200).json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+  },
 
-// Excluir uma tarefa
-exports.excluirTarefa = async (req, res) => {
-  const { id } = req.params;
-
-  const query = 'DELETE FROM tarefas WHERE id = $1 RETURNING *';
-  const values = [id];
-
-  try {
-    const result = await pool.query(query, values);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Tarefa não encontrada' });
+  // Listar tarefas (JSON) para <ul>
+  async listarTarefas(req, res) {
+    try {
+      const tasks = await TaskModel.getAll();
+      res.json(tasks);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
     }
-    res.status(200).json({ message: 'Tarefa excluída com sucesso' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  },
+
+  // CRUD completo via REST:
+  async list(req, res) { 
+    // Copie o conteúdo de listarTarefas aqui, ou chame diretamente a função exportada
+    try {
+      const tasks = await TaskModel.getAll();
+      res.json(tasks);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  async create(req, res) {
+    const { group_id, user_id, title, due_date } = req.body;
+    try {
+      const t = await TaskModel.create({ group_id, user_id, title, due_date });
+      res.status(201).json(t);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  async editarTarefa(req, res) {
+    const id = parseInt(req.params.id);
+    try {
+      const t = await TaskModel.update(id, req.body);
+      res.json(t);
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Erro ao editar tarefa');
+    }
+  },
+
+  async excluirTarefa(req, res) {
+    const id = parseInt(req.params.id);
+    try {
+      await TaskModel.delete(id);
+      res.status(204).send();
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Erro ao excluir tarefa');
+    }
   }
 };

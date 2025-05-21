@@ -1,6 +1,12 @@
 -- StudySync Physical Data Model
 -- SQL DDL for Supabase (PostgreSQL)
 
+-- 1. Remova tabelas que usam o tipo ENUM
+DROP TABLE IF EXISTS tasks CASCADE;
+DROP TABLE IF EXISTS group_members;
+DROP TABLE IF EXISTS study_groups CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
 -- 1. Task status enum
 DROP TYPE IF EXISTS task_status;
 CREATE TYPE task_status AS ENUM ('to-do', 'doing', 'done');
@@ -19,9 +25,10 @@ CREATE TABLE users (
 DROP TABLE IF EXISTS study_groups CASCADE;
 CREATE TABLE study_groups (
   id          SERIAL PRIMARY KEY,
+  id_user     INTEGER    NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   name        TEXT      NOT NULL,
   description TEXT,
-  created_by  INTEGER   NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_by  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at  TIMESTAMP NOT NULL DEFAULT now()
 );
 
@@ -35,24 +42,6 @@ CREATE TABLE group_members (
   PRIMARY KEY (group_id, user_id)
 );
 
-DROP VIEW IF EXISTS group_sync_status;
-CREATE VIEW group_sync_status AS
-SELECT
-  g.id                 AS group_id,
-  g.name               AS group_name,
-  t.due_date,
-  COUNT(t.id)          AS total_tasks,
-  SUM((t.status = 'done')::int) AS done_tasks,
-  CASE
-    WHEN COUNT(t.id) = 0 THEN NULL
-    WHEN COUNT(t.id) = SUM((t.status = 'done')::int) THEN true
-    ELSE false
-  END AS all_synced
-FROM study_groups g
-LEFT JOIN tasks t ON t.group_id = g.id
-GROUP BY g.id, g.name, t.due_date
-ORDER BY g.id, t.due_date;
-
 -- 5. Tasks
 DROP TABLE IF EXISTS tasks CASCADE;
 CREATE TABLE tasks (
@@ -62,24 +51,10 @@ CREATE TABLE tasks (
   title       TEXT         NOT NULL,
   description TEXT,
   due_date    DATE         NOT NULL,
-  status      task_status  NOT NULL DEFAULT 'to-do', -- CORRIGIDO AQUI
+  status      task_status  NOT NULL DEFAULT 'to-do',
   created_at  TIMESTAMP    NOT NULL DEFAULT now(),
   updated_at  TIMESTAMP    NOT NULL DEFAULT now()
 );
-
--- Trigger to auto-update
-CREATE OR REPLACE FUNCTION fn_update_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at := now();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_tasks_updated_at
-  BEFORE UPDATE ON tasks
-  FOR EACH ROW
-  EXECUTE PROCEDURE fn_update_timestamp();
 
 -- 6. Pomodoro sessions (optional)
 DROP TABLE IF EXISTS pomodoro_sessions;
@@ -103,21 +78,88 @@ CREATE TABLE calendar_events (
   end_time    TIMESTAMP NOT NULL
 );
 
--- 8. View: Group synchronization status
-DROP VIEW IF EXISTS group_sync_status;
-CREATE VIEW group_sync_status AS
-SELECT
-  g.id                 AS group_id,
-  g.name               AS group_name,
-  t.due_date,
-  COUNT(t.id)          AS total_tasks,
-  SUM((t.status = 'done')::int) AS done_tasks,
-  CASE
-    WHEN COUNT(t.id) = 0 THEN NULL
-    WHEN COUNT(t.id) = SUM((t.status = 'done')::int) THEN true
-    ELSE false
-  END AS all_synced
-FROM study_groups g
-LEFT JOIN tasks t ON t.group_id = g.id
-GROUP BY g.id, g.name, t.due_date
-ORDER BY g.id, t.due_date;
+-- 1. Crie a tabela de status (DROP se já existir)
+DROP TABLE IF EXISTS group_sync_status;
+CREATE TABLE group_sync_status (
+  group_id INTEGER NOT NULL REFERENCES study_groups(id) ON DELETE CASCADE,
+  group_name TEXT NOT NULL,
+  due_date DATE NOT NULL, 
+  total_tasks INTEGER NOT NULL DEFAULT 0,
+  done_tasks INTEGER NOT NULL DEFAULT 0,
+  all_synced BOOLEAN,
+  last_updated TIMESTAMP NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (group_id, due_date)
+);
+
+-- 2. Função para atualizar o status
+CREATE OR REPLACE FUNCTION update_group_sync_status()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_due_date DATE;
+BEGIN
+  IF TG_TABLE_NAME = 'tasks' THEN
+    v_due_date := COALESCE(NEW.due_date, OLD.due_date);
+    -- Atualiza só para o due_date afetado
+    INSERT INTO group_sync_status (group_id, group_name, due_date, total_tasks, done_tasks, all_synced)
+    SELECT 
+      g.id,
+      g.name,
+      v_due_date,
+      COUNT(t.id),
+      SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END),
+      CASE 
+        WHEN COUNT(t.id) = 0 THEN NULL
+        WHEN COUNT(t.id) = SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) THEN true
+        ELSE false
+      END
+    FROM study_groups g
+    LEFT JOIN tasks t ON t.group_id = g.id AND t.due_date = v_due_date
+    WHERE g.id = COALESCE(NEW.group_id, OLD.group_id)
+    GROUP BY g.id, g.name, v_due_date
+    ON CONFLICT (group_id, due_date) 
+    DO UPDATE SET
+      total_tasks = EXCLUDED.total_tasks,
+      done_tasks = EXCLUDED.done_tasks,
+      all_synced = EXCLUDED.all_synced,
+      last_updated = NOW();
+  ELSE
+    -- Para novos grupos, atualize para todos os due_dates existentes desse grupo
+    FOR v_due_date IN SELECT DISTINCT due_date FROM tasks WHERE group_id = NEW.id LOOP
+      INSERT INTO group_sync_status (group_id, group_name, due_date, total_tasks, done_tasks, all_synced)
+      SELECT 
+        NEW.id,
+        NEW.name,
+        v_due_date,
+        COUNT(t.id),
+        SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END),
+        CASE 
+          WHEN COUNT(t.id) = 0 THEN NULL
+          WHEN COUNT(t.id) = SUM(CASE WHEN t.status = 'done' THEN 1 ELSE 0 END) THEN true
+          ELSE false
+        END
+      FROM tasks t
+      WHERE t.group_id = NEW.id AND t.due_date = v_due_date
+      GROUP BY v_due_date
+      ON CONFLICT (group_id, due_date) 
+      DO UPDATE SET
+        total_tasks = EXCLUDED.total_tasks,
+        done_tasks = EXCLUDED.done_tasks,
+        all_synced = EXCLUDED.all_synced,
+        last_updated = NOW();
+    END LOOP;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 3. Triggers para atualização automática
+CREATE TRIGGER trg_task_sync_status
+AFTER INSERT OR UPDATE OR DELETE ON tasks
+FOR EACH ROW EXECUTE FUNCTION update_group_sync_status();
+
+-- 4. Trigger para novos grupos
+CREATE TRIGGER trg_group_sync_status
+AFTER INSERT ON study_groups
+FOR EACH ROW EXECUTE FUNCTION update_group_sync_status();
+
+-- 5. Preencha a tabela com dados iniciais (opcional)

@@ -2,8 +2,9 @@
 require('dotenv').config();
 
 const { Pool } = require('pg');
+const { createClient } = require('@supabase/supabase-js');
 
-// Criando a pool de conexões
+// Pool de conexões PostgreSQL (caso você use pg em algum lugar)
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -12,4 +13,13 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-module.exports = pool;
+// Cliente Supabase
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+
+module.exports = {
+  pool,
+  supabase
+};
