@@ -35,6 +35,8 @@ scripts/init.sql
 
 Este script cria todas as tabelas, enum de status, triggers e a view utilizada para calcular a sincronização de tarefas nos grupos.
 
+## Diagrama MVC
+<img src="https://github.com/Sftwr-crativ/StudySync/blob/8cc4dbafee515e68c766ed5e32d92220383ab2db/documentos/Diagrama_MVC.png"></img>
 
 ## Pré-requisitos
 Node.js (v18+ recomendado)
