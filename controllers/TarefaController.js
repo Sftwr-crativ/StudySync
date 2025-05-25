@@ -26,7 +26,6 @@ module.exports = {
 
   // CRUD completo via REST:
   async list(req, res) { 
-    // Copie o conteúdo de listarTarefas aqui, ou chame diretamente a função exportada
     try {
       const tasks = await TaskModel.getAll();
       res.json(tasks);

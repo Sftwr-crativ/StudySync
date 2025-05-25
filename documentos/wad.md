@@ -34,3 +34,84 @@ scripts/init.sql
 ```
 
 Este script cria todas as tabelas, enum de status, triggers e a view utilizada para calcular a sincronização de tarefas nos grupos.
+
+
+## Pré-requisitos
+Node.js (v18+ recomendado)
+Conta no Supabase
+npm
+
+## Configuração do Banco de Dados
+
+1. Crie um projeto no Supabase
+
+Acesse app.supabase.com, crie um projeto e anote:
+
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- Dados de conexão do banco (usuário, senha, host, porta)
+
+2. Configure as variáveis de ambiente
+
+Crie um arquivo .env na raiz do projeto com o seguinte conteúdo (ajuste para os dados do seu Supabase):
+
+```
+DB_USER=seu_usuario
+DB_HOST=seu_host
+DB_DATABASE=postgres
+DB_PASSWORD=sua_senha
+DB_PORT=6543
+SUPABASE_URL=https://<sua-instancia>.supabase.co
+SUPABASE_ANON_KEY=<sua_anon_key>
+PORT=3000
+```
+
+3. Crie as tabelas e tipos
+
+O projeto já possui um script de migração em init.sql para criar todas as tabelas necessárias.
+
+## Rodando as Migrações
+
+Para criar ou atualizar as tabelas no banco de dados Supabase, execute:
+
+```
+npm run init-db
+```
+
+Esse comando executa o script init.sql usando as credenciais do seu .env.
+
+## Rodando o Projeto
+
+1. Instale as dependências:
+
+```
+npm install
+```
+
+2. Inicie o servidor
+
+```
+node server.js
+```
+O servidor estará disponível em http://localhost:3000
+
+## Testando as APIs
+
+Endpoints principais:
+- Listar tarefas (JSON):
+```
+GET /api/tasks
+```
+- Criar tarefa (JSON):
+```
+POST /api/tasks
+Content-Type: application/json
+
+{
+  "title": "Nova tarefa",
+  "due_date": "2024-06-01",
+  "group_id": 1,
+  "user_id": 1
+}
+```
+Acesse http://localhost:3000/ para usar a interface web (EJS) e cadastrar tarefas.
