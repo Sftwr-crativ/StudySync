@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/styles/main.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-graduation-cap me-2"></i>
+                StudySync
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/groups">
+                            <i class="fas fa-users me-1"></i>
+                            Grupos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/tasks">
+                            <i class="fas fa-tasks me-1"></i>
+                            Tarefas
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            <%= user.name %>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user-edit me-1"></i>
+                                Perfil
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="/logout" method="POST" class="d-inline">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt me-1"></i>
+                                        Sair
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-tasks me-2 text-primary"></i>
+                    Minhas Tarefas
+                </h1>
+                <p class="text-muted">Gerencie suas tarefas e acompanhe o progresso</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="/tasks/create" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Nova Tarefa
+                </a>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% } %>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-tasks fa-2x mb-2"></i>
+                        <h3 class="mb-0"><%= stats.total %></h3>
+                        <small>Total</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-secondary text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <h3 class="mb-0"><%= stats.todo %></h3>
+                        <small>A Fazer</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-play fa-2x mb-2"></i>
+                        <h3 class="mb-0"><%= stats.doing %></h3>
+                        <small>Em Andamento</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-check fa-2x mb-2"></i>
+                        <h3 class="mb-0"><%= stats.done %></h3>
+                        <small>Concluídas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts for overdue and upcoming tasks -->
+        <% if (overdueTasks && overdueTasks.length > 0) { %>
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Atenção!</strong> Você tem <%= overdueTasks.length %> tarefa(s) em atraso.
+                <a href="#overdue-section" class="alert-link">Ver tarefas em atraso</a>
+            </div>
+        <% } %>
+
+        <% if (upcomingTasks && upcomingTasks.length > 0) { %>
+            <div class="alert alert-warning">
+                <i class="fas fa-clock me-2"></i>
+                <strong>Lembrete:</strong> Você tem <%= upcomingTasks.length %> tarefa(s) vencendo nos próximos 7 dias.
+                <a href="#upcoming-section" class="alert-link">Ver tarefas próximas</a>
+            </div>
+        <% } %>
+
+        <!-- Task Filters -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="btn-group" role="group" aria-label="Filtros de tarefas">
+                            <input type="radio" class="btn-check" name="taskFilter" id="filter-all" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary" for="filter-all">
+                                <i class="fas fa-list me-1"></i>
+                                Todas
+                            </label>
+
+                            <input type="radio" class="btn-check" name="taskFilter" id="filter-todo" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="filter-todo">
+                                <i class="fas fa-clock me-1"></i>
+                                A Fazer
+                            </label>
+
+                            <input type="radio" class="btn-check" name="taskFilter" id="filter-doing" autocomplete="off">
+                            <label class="btn btn-outline-warning" for="filter-doing">
+                                <i class="fas fa-play me-1"></i>
+                                Em Andamento
+                            </label>
+
+                            <input type="radio" class="btn-check" name="taskFilter" id="filter-done" autocomplete="off">
+                            <label class="btn btn-outline-success" for="filter-done">
+                                <i class="fas fa-check me-1"></i>
+                                Concluídas
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks List -->
+        <% if (tasks && tasks.length > 0) { %>
+            <div class="row" id="tasks-container">
+                <% tasks.forEach(task => { %>
+                    <div class="col-md-6 col-lg-4 mb-4 task-card" data-status="<%= task.status %>">
+                        <div class="card h-100 shadow-sm">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span class="badge bg-<%= task.status === 'to-do' ? 'secondary' : task.status === 'doing' ? 'warning' : 'success' %>">
+                                    <%= task.status === 'to-do' ? 'A Fazer' : task.status === 'doing' ? 'Em Andamento' : 'Concluída' %>
+                                </span>
+                                <% 
+                                const today = new Date();
+                                const dueDate = new Date(task.due_date);
+                                const isOverdue = dueDate < today && task.status !== 'done';
+                                const isUpcoming = dueDate <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000) && task.status !== 'done';
+                                %>
+                                <% if (isOverdue) { %>
+                                    <i class="fas fa-exclamation-triangle text-danger" title="Em atraso"></i>
+                                <% } else if (isUpcoming) { %>
+                                    <i class="fas fa-clock text-warning" title="Vence em breve"></i>
+                                <% } %>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <a href="/tasks/<%= task.id %>" class="text-decoration-none">
+                                        <%= task.title %>
+                                    </a>
+                                </h5>
+                                <% if (task.description) { %>
+                                    <p class="card-text text-muted">
+                                        <%= task.description.length > 100 ? task.description.substring(0, 100) + '...' : task.description %>
+                                    </p>
+                                <% } %>
+                                <div class="row text-center mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted">Grupo</small>
+                                        <div class="fw-bold">
+                                            <% if (task.group) { %>
+                                                <%= task.group.name %>
+                                            <% } else { %>
+                                                Sem grupo
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Vencimento</small>
+                                        <div class="fw-bold <%= isOverdue ? 'text-danger' : isUpcoming ? 'text-warning' : '' %>">
+                                            <%= new Date(task.due_date).toLocaleDateString('pt-BR') %>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-light">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <% if (task.status !== 'to-do') { %>
+                                            <button class="btn btn-outline-secondary" onclick="updateTaskStatus(<%= task.id %>, 'to-do')" title="Marcar como A Fazer">
+                                                <i class="fas fa-clock"></i>
+                                            </button>
+                                        <% } %>
+                                        <% if (task.status !== 'doing') { %>
+                                            <button class="btn btn-outline-warning" onclick="updateTaskStatus(<%= task.id %>, 'doing')" title="Marcar como Em Andamento">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                        <% } %>
+                                        <% if (task.status !== 'done') { %>
+                                            <button class="btn btn-outline-success" onclick="updateTaskStatus(<%= task.id %>, 'done')" title="Marcar como Concluída">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        <% } %>
+                                    </div>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="/tasks/<%= task.id %>/edit" class="btn btn-outline-primary" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button class="btn btn-outline-danger" onclick="confirmDelete(<%= task.id %>, '<%= task.title %>')" title="Deletar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            </div>
+        <% } else { %>
+            <!-- Empty State -->
+            <div class="text-center py-5">
+                <i class="fas fa-tasks fa-5x text-muted mb-4"></i>
+                <h3 class="text-muted">Nenhuma tarefa encontrada</h3>
+                <p class="text-muted mb-4">
+                    Você ainda não tem tarefas criadas.<br>
+                    Crie sua primeira tarefa para começar a organizar seus estudos.
+                </p>
+                <a href="/tasks/create" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    Criar Minha Primeira Tarefa
+                </a>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light mt-5 py-4">
+        <div class="container text-center">
+            <p class="mb-0 text-muted">
+                &copy; 2024 StudySync - Sistema de Grupos de Estudo Colaborativo
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Filter tasks by status
+        document.querySelectorAll('input[name="taskFilter"]').forEach(filter => {
+            filter.addEventListener('change', function() {
+                const status = this.id.replace('filter-', '');
+                const taskCards = document.querySelectorAll('.task-card');
+                
+                taskCards.forEach(card => {
+                    if (status === 'all' || card.dataset.status === status) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+
+        // Update task status
+        function updateTaskStatus(taskId, newStatus) {
+            fetch(`/tasks/${taskId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Erro ao atualizar status da tarefa');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao atualizar status da tarefa');
+            });
+        }
+
+        // Delete task
+        function confirmDelete(taskId, taskTitle) {
+            if (confirm(`Tem certeza que deseja deletar a tarefa "${taskTitle}"? Esta ação não pode ser desfeita.`)) {
+                fetch(`/tasks/${taskId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Erro ao deletar tarefa');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao deletar tarefa');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

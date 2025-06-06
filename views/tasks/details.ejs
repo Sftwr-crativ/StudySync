@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/styles/main.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-graduation-cap me-2"></i>
+                StudySync
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/groups">
+                            <i class="fas fa-users me-1"></i>
+                            Grupos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/tasks">
+                            <i class="fas fa-tasks me-1"></i>
+                            Tarefas
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            <%= user.name %>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user-edit me-1"></i>
+                                Perfil
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="/logout" method="POST" class="d-inline">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt me-1"></i>
+                                        Sair
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/tasks">Tarefas</a></li>
+                <li class="breadcrumb-item active" aria-current="page"><%= task.title %></li>
+            </ol>
+        </nav>
+
+        <!-- Task Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    <i class="fas fa-tasks me-2 text-primary"></i>
+                    <%= task.title %>
+                </h1>
+                <div class="d-flex align-items-center mb-3">
+                    <span class="badge bg-<%= task.status === 'to-do' ? 'secondary' : task.status === 'doing' ? 'warning' : 'success' %> me-3">
+                        <i class="fas fa-<%= task.status === 'to-do' ? 'clock' : task.status === 'doing' ? 'play' : 'check' %> me-1"></i>
+                        <%= task.status === 'to-do' ? 'A Fazer' : task.status === 'doing' ? 'Em Andamento' : 'Concluída' %>
+                    </span>
+                    <% 
+                    const today = new Date();
+                    const dueDate = new Date(task.due_date);
+                    const isOverdue = dueDate < today && task.status !== 'done';
+                    const isUpcoming = dueDate <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000) && task.status !== 'done';
+                    %>
+                    <% if (isOverdue) { %>
+                        <span class="badge bg-danger">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Em Atraso
+                        </span>
+                    <% } else if (isUpcoming) { %>
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-clock me-1"></i>
+                            Vence em Breve
+                        </span>
+                    <% } %>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="btn-group" role="group">
+                    <% if (task.user_id === user.id) { %>
+                        <a href="/tasks/<%= task.id %>/edit" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i>
+                            Editar
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" onclick="confirmDelete()">
+                            <i class="fas fa-trash me-1"></i>
+                            Deletar
+                        </button>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Details -->
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Description -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-align-left me-2"></i>
+                            Descrição
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (task.description) { %>
+                            <p class="mb-0"><%= task.description %></p>
+                        <% } else { %>
+                            <p class="text-muted mb-0">
+                                <em>Nenhuma descrição fornecida</em>
+                            </p>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Status Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cogs me-2"></i>
+                            Ações
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Alterar status da tarefa:</p>
+                        <div class="btn-group" role="group">
+                            <% if (task.status !== 'to-do') { %>
+                                <button class="btn btn-outline-secondary" onclick="updateTaskStatus('to-do')">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Marcar como A Fazer
+                                </button>
+                            <% } %>
+                            <% if (task.status !== 'doing') { %>
+                                <button class="btn btn-outline-warning" onclick="updateTaskStatus('doing')">
+                                    <i class="fas fa-play me-1"></i>
+                                    Marcar como Em Andamento
+                                </button>
+                            <% } %>
+                            <% if (task.status !== 'done') { %>
+                                <button class="btn btn-outline-success" onclick="updateTaskStatus('done')">
+                                    <i class="fas fa-check me-1"></i>
+                                    Marcar como Concluída
+                                </button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <!-- Task Info -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Informações
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <strong>Grupo:</strong>
+                                <div class="mt-1">
+                                    <% if (task.group) { %>
+                                        <a href="/groups/<%= task.group.id %>" class="text-decoration-none">
+                                            <i class="fas fa-users me-1"></i>
+                                            <%= task.group.name %>
+                                        </a>
+                                    <% } else { %>
+                                        <span class="text-muted">Sem grupo</span>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <strong>Responsável:</strong>
+                                <div class="mt-1">
+                                    <% if (task.assigned_user) { %>
+                                        <i class="fas fa-user me-1"></i>
+                                        <%= task.assigned_user.name %>
+                                        <% if (task.assigned_user.id === user.id) { %>
+                                            <span class="badge bg-primary ms-1">Você</span>
+                                        <% } %>
+                                    <% } else { %>
+                                        <i class="fas fa-user me-1"></i>
+                                        Você
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <strong>Vencimento:</strong>
+                                <div class="mt-1 <%= isOverdue ? 'text-danger' : isUpcoming ? 'text-warning' : '' %>">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    <%= new Date(task.due_date).toLocaleDateString('pt-BR') %>
+                                    <% if (isOverdue) { %>
+                                        <br><small class="text-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            Tarefa em atraso
+                                        </small>
+                                    <% } else if (isUpcoming) { %>
+                                        <br><small class="text-warning">
+                                            <i class="fas fa-clock me-1"></i>
+                                            Vence em breve
+                                        </small>
+                                    <% } %>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <strong>Criada em:</strong>
+                                <div class="mt-1 text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    <%= new Date(task.created_at).toLocaleDateString('pt-BR') %>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bolt me-2"></i>
+                            Ações Rápidas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/tasks" class="btn btn-outline-primary">
+                                <i class="fas fa-list me-1"></i>
+                                Ver Todas as Tarefas
+                            </a>
+                            <% if (task.group) { %>
+                                <a href="/groups/<%= task.group.id %>" class="btn btn-outline-secondary">
+                                    <i class="fas fa-users me-1"></i>
+                                    Ver Grupo
+                                </a>
+                            <% } %>
+                            <a href="/tasks/create?group=<%= task.group_id %>" class="btn btn-outline-success">
+                                <i class="fas fa-plus me-1"></i>
+                                Nova Tarefa
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light mt-5 py-4">
+        <div class="container text-center">
+            <p class="mb-0 text-muted">
+                &copy; 2024 StudySync - Sistema de Grupos de Estudo Colaborativo
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update task status
+        function updateTaskStatus(newStatus) {
+            fetch(`/tasks/<%= task.id %>/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Erro ao atualizar status da tarefa');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao atualizar status da tarefa');
+            });
+        }
+
+        // Delete task
+        function confirmDelete() {
+            if (confirm('Tem certeza que deseja deletar esta tarefa? Esta ação não pode ser desfeita.')) {
+                fetch(`/tasks/<%= task.id %>`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/tasks';
+                    } else {
+                        alert('Erro ao deletar tarefa');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao deletar tarefa');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

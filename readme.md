@@ -1,10 +1,38 @@
-# StudySync - Projeto Individual
+# StudySync - Sistema de Grupos de Estudo Colaborativo
 
-## Descrição do Sistema Escolhido
+## Descrição do Sistema
 
-O **StudySync** é um sistema web colaborativo voltado para grupos de estudo. Ele permite que usuários criem grupos, atribuam tarefas com prazos e status (Kanban: `to-do`, `doing`, `done`) e acompanhem a sincronização do progresso coletivo. O sistema facilita o acompanhamento de tarefas e promove o senso de responsabilidade entre os membros.
+O **StudySync** é um sistema web colaborativo voltado para grupos de estudo. Ele permite que usuários se cadastrem, criem grupos, atribuam tarefas com prazos e status (Kanban: `to-do`, `doing`, `done`) e acompanhem a sincronização do progresso coletivo. O sistema facilita o acompanhamento de tarefas e promove o senso de responsabilidade entre os membros.
 
-Este projeto, na sua primeira etapa, foca na estruturação da base do sistema utilizando Node.js com Express e organização do código no padrão **MVC** (Model-View-Controller). Também inclui a modelagem do banco de dados que será utilizado nas próximas fases.
+## Funcionalidades Implementadas
+
+### ✅ Sistema de Autenticação
+- Cadastro de usuários com validação
+- Login e logout seguros
+- Sessões de usuário
+- Hash de senhas com bcrypt
+- Middleware de proteção de rotas
+- Validação de formulários
+
+### ✅ Interface Web
+- Views EJS responsivas
+- Design moderno com Bootstrap
+- Páginas de login e cadastro
+- Dashboard do usuário
+- Navegação intuitiva
+
+### ✅ API REST
+- CRUD completo de usuários
+- Endpoints para tarefas
+- Validação de dados
+- Tratamento de erros
+
+### ✅ Arquitetura MVC
+- Controllers organizados
+- Models com Supabase
+- Views EJS estruturadas
+- Middleware customizado
+- Rotas protegidas
 
 ---
 
@@ -38,25 +66,77 @@ study-sync/
 
 ## Como Executar o Projeto Localmente
 
-### 1. Instalar dependências
+### 1. Pré-requisitos
+- Node.js (v18+ recomendado)
+- Conta no Supabase
+- npm ou yarn
+
+### 2. Configuração do Banco de Dados
+
+1. **Crie um projeto no Supabase**
+   - Acesse [app.supabase.com](https://app.supabase.com)
+   - Crie um novo projeto
+   - Anote a URL e a chave anônima
+
+2. **Configure as variáveis de ambiente**
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edite o arquivo `.env` com suas credenciais do Supabase:
+   ```env
+   DB_USER=seu_usuario
+   DB_HOST=seu_host
+   DB_NAME=postgres
+   DB_PASSWORD=sua_senha
+   DB_PORT=6543
+   SUPABASE_URL=https://sua-instancia.supabase.co
+   SUPABASE_ANON_KEY=sua_anon_key
+   SESSION_SECRET=sua-chave-secreta-aqui
+   PORT=3000
+   ```
+
+3. **Execute as migrações do banco**
+   ```bash
+   npm run init-db
+   ```
+
+### 3. Instalar dependências
 
 ```bash
 npm install
 ```
 
-### 2. Rodar o servidor
+### 4. Executar o servidor
 
+**Modo desenvolvimento (com nodemon):**
 ```bash
-node server.js
+npm run dev
 ```
 
-Ou, se tiver configurado:
-
+**Modo produção:**
 ```bash
 npm start
 ```
 
 A aplicação será iniciada em: `http://localhost:3000`
+
+### 5. Executar testes
+
+```bash
+# Executar todos os testes
+npm test
+
+# Executar testes com coverage
+npm run test:coverage
+```
+
+## Primeiros Passos
+
+1. Acesse `http://localhost:3000`
+2. Clique em "Cadastrar" para criar uma conta
+3. Faça login com suas credenciais
+4. Explore o dashboard e as funcionalidades disponíveis
 
 ---
 

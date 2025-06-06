@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/styles/main.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-graduation-cap me-2"></i>
+                StudySync
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-tachometer-alt me-1"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/groups">
+                            <i class="fas fa-users me-1"></i>
+                            Grupos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/tasks">
+                            <i class="fas fa-tasks me-1"></i>
+                            Tarefas
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            <%= user.name %>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/profile">
+                                <i class="fas fa-user-edit me-1"></i>
+                                Perfil
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="/logout" method="POST" class="d-inline">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt me-1"></i>
+                                        Sair
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="/tasks">Tarefas</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Criar Tarefa</li>
+            </ol>
+        </nav>
+
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1 class="mb-0">
+                    <i class="fas fa-plus-circle me-2 text-primary"></i>
+                    Criar Nova Tarefa
+                </h1>
+                <p class="text-muted">Adicione uma nova tarefa ao seu grupo de estudo</p>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tasks me-2"></i>
+                            Informações da Tarefa
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Error Messages -->
+                        <% if (errors && errors.length > 0) { %>
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <ul class="mb-0">
+                                    <% errors.forEach(error => { %>
+                                        <li><%= error.msg %></li>
+                                    <% }); %>
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        <% } %>
+
+                        <form action="/tasks" method="POST" id="createTaskForm">
+                            <div class="mb-3">
+                                <label for="group_id" class="form-label">
+                                    <i class="fas fa-users me-1"></i>
+                                    Grupo *
+                                </label>
+                                <select class="form-select" id="group_id" name="group_id" required>
+                                    <option value="">Selecione um grupo</option>
+                                    <% if (groups && groups.length > 0) { %>
+                                        <% groups.forEach(group => { %>
+                                            <option value="<%= group.id %>" <%= selectedGroupId == group.id ? 'selected' : '' %>>
+                                                <%= group.name %>
+                                            </option>
+                                        <% }); %>
+                                    <% } %>
+                                </select>
+                                <% if (!groups || groups.length === 0) { %>
+                                    <div class="form-text text-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        Você precisa fazer parte de pelo menos um grupo para criar tarefas.
+                                        <a href="/groups/create">Criar um grupo</a>
+                                    </div>
+                                <% } %>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="title" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>
+                                    Título da Tarefa *
+                                </label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="<%= formData.title || '' %>" required
+                                       placeholder="Ex: Estudar Capítulo 5 - Funções">
+                                <div class="form-text">
+                                    O título deve ter entre 3 e 200 caracteres
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>
+                                    Descrição
+                                </label>
+                                <textarea class="form-control" id="description" name="description" 
+                                          rows="4" placeholder="Descreva os detalhes da tarefa, objetivos e recursos necessários..."><%= formData.description || '' %></textarea>
+                                <div class="form-text">
+                                    Máximo 1000 caracteres (opcional)
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="due_date" class="form-label">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    Data de Vencimento *
+                                </label>
+                                <input type="date" class="form-control" id="due_date" name="due_date" 
+                                       value="<%= formData.due_date || '' %>" required>
+                                <div class="form-text">
+                                    A data não pode ser no passado
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="assigned_user_id" class="form-label">
+                                    <i class="fas fa-user me-1"></i>
+                                    Responsável
+                                </label>
+                                <select class="form-select" id="assigned_user_id" name="assigned_user_id">
+                                    <option value="">Eu mesmo</option>
+                                    <!-- Aqui seria carregado dinamicamente os membros do grupo selecionado -->
+                                </select>
+                                <div class="form-text">
+                                    Por padrão, você será o responsável pela tarefa
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Dica:</strong> Tarefas bem definidas têm maior chance de serem concluídas com sucesso. 
+                                Seja específico sobre o que precisa ser feito e quando.
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/tasks" class="btn btn-outline-secondary me-md-2">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary" <%= (!groups || groups.length === 0) ? 'disabled' : '' %>>
+                                    <i class="fas fa-plus me-2"></i>
+                                    Criar Tarefa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Tips Card -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-lightbulb me-2 text-warning"></i>
+                            Dicas para Tarefas Eficazes
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Use títulos claros e específicos
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Defina prazos realistas
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Divida tarefas grandes em menores
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Inclua recursos necessários
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Defina critérios de conclusão
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Comunique com o grupo
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light mt-5 py-4">
+        <div class="container text-center">
+            <p class="mb-0 text-muted">
+                &copy; 2024 StudySync - Sistema de Grupos de Estudo Colaborativo
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set minimum date to today
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('due_date').setAttribute('min', today);
+            
+            // If no date is set, default to tomorrow
+            if (!document.getElementById('due_date').value) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                document.getElementById('due_date').value = tomorrow.toISOString().split('T')[0];
+            }
+        });
+
+        // Character counter for description
+        const descriptionTextarea = document.getElementById('description');
+        const maxLength = 1000;
+
+        descriptionTextarea.addEventListener('input', function() {
+            const currentLength = this.value.length;
+            const remaining = maxLength - currentLength;
+            
+            // Update form text
+            const formText = this.nextElementSibling;
+            if (remaining < 0) {
+                formText.textContent = `Excedeu ${Math.abs(remaining)} caracteres do limite`;
+                formText.className = 'form-text text-danger';
+            } else {
+                formText.textContent = `${remaining} caracteres restantes`;
+                formText.className = 'form-text text-muted';
+            }
+        });
+
+        // Form validation
+        document.getElementById('createTaskForm').addEventListener('submit', function(e) {
+            const groupId = document.getElementById('group_id').value;
+            const title = document.getElementById('title').value.trim();
+            const dueDate = document.getElementById('due_date').value;
+            const description = document.getElementById('description').value.trim();
+
+            if (!groupId) {
+                e.preventDefault();
+                alert('Por favor, selecione um grupo.');
+                return;
+            }
+
+            if (title.length < 3) {
+                e.preventDefault();
+                alert('O título da tarefa deve ter pelo menos 3 caracteres.');
+                return;
+            }
+
+            if (!dueDate) {
+                e.preventDefault();
+                alert('Por favor, defina uma data de vencimento.');
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const selectedDate = new Date(dueDate);
+            
+            if (selectedDate < today) {
+                e.preventDefault();
+                alert('A data de vencimento não pode ser no passado.');
+                return;
+            }
+
+            if (description.length > 1000) {
+                e.preventDefault();
+                alert('A descrição não pode ter mais de 1000 caracteres.');
+                return;
+            }
+        });
+
+        // Load group members when group is selected (future enhancement)
+        document.getElementById('group_id').addEventListener('change', function() {
+            const groupId = this.value;
+            const assignedUserSelect = document.getElementById('assigned_user_id');
+            
+            // Reset to default
+            assignedUserSelect.innerHTML = '<option value="">Eu mesmo</option>';
+            
+            if (groupId) {
+                // Future: Load group members via AJAX
+                // fetch(`/api/groups/${groupId}/members`)...
+            }
+        });
+    </script>
+</body>
+</html>
